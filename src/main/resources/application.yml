@@ -9,7 +9,6 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
-      initialization-fail-timeout: 60000
 
   jpa:
     hibernate:
