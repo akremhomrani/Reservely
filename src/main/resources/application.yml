@@ -27,8 +27,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
             scope:
               - email
               - profile
@@ -36,7 +36,7 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:II8Dx2g3DFhBnwz8BEC5HbwpqYobPOXVEvbkYBTqna1COkU27ydCSMAWZjZVFF4J3bo3UmHYghYkKxmTiYUsZw==}
     expiration-ms: 86400000    # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
   oauth2:
