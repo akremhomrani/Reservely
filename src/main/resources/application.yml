@@ -3,9 +3,9 @@ spring:
     name: reservely-backend
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/reservely}
-    username: ${DB_USERNAME:reservely}
-    password: ${DB_PASSWORD:reservely_dev}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:reservely}
+    username: ${PGUSER:${DB_USERNAME:reservely}}
+    password: ${PGPASSWORD:${DB_PASSWORD:reservely_dev}}
     driver-class-name: org.postgresql.Driver
 
   jpa:
