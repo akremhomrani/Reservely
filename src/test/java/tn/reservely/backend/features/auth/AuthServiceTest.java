@@ -54,7 +54,7 @@ class AuthServiceTest {
     @Test
     void register_shouldCreateUserAndReturnToken() {
         RegisterRequest req = new RegisterRequest(
-                "new@example.com", "password123", "New User", null, null);
+                "new@example.com", "password123", "New User", null, null, null);
 
         when(userRepository.existsByEmail(req.email())).thenReturn(false);
         when(passwordEncoder.encode(req.password())).thenReturn("$hashed");
@@ -71,7 +71,7 @@ class AuthServiceTest {
     @Test
     void register_shouldThrowConflict_whenEmailExists() {
         RegisterRequest req = new RegisterRequest(
-                "test@example.com", "password123", "Test", null, null);
+                "test@example.com", "password123", "Test", null, null, null);
 
         when(userRepository.existsByEmail(req.email())).thenReturn(true);
 
