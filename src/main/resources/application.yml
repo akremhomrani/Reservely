@@ -3,10 +3,13 @@ spring:
     name: reservely-backend
 
   datasource:
-    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:reservely}
-    username: ${PGUSER:${DB_USERNAME:reservely}}
-    password: ${PGPASSWORD:${DB_PASSWORD:reservely_dev}}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:reservely}}
+    username: ${SPRING_DATASOURCE_USERNAME:${PGUSER:${DB_USERNAME:reservely}}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${PGPASSWORD:${DB_PASSWORD:reservely_dev}}}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      initialization-fail-timeout: 60000
 
   jpa:
     hibernate:
@@ -43,7 +46,7 @@ app:
     authorized-redirect-uri: reservelyapp://oauth2/callback
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /
 
