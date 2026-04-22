@@ -7,5 +7,6 @@ import java.util.List;
 
 public record CreateStaffRequest(
         @NotBlank @Size(max = 100) String name,
+        @Size(max = 30) String phone,
         List<String> specialties
 ) {}

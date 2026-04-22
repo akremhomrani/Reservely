@@ -44,6 +44,18 @@ public class Business {
 
     private String phone;
 
+    @Column(name = "instagram_handle")
+    private String instagramHandle;
+
+    @Column(name = "facebook_handle")
+    private String facebookHandle;
+
+    @Column(name = "tiktok_handle")
+    private String tiktokHandle;
+
+    @Column(name = "whatsapp_number")
+    private String whatsappNumber;
+
     @Column(name = "image_url")
     private String imageUrl;
 

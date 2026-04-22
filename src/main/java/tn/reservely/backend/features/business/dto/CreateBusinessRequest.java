@@ -14,5 +14,9 @@ public record CreateBusinessRequest(
         String category,
         String genderTarget,
         @Size(max = 20) String phone,
-        List<String> tags
+        List<String> tags,
+        @Size(max = 100) String instagramHandle,
+        @Size(max = 100) String facebookHandle,
+        @Size(max = 100) String tiktokHandle,
+        @Size(max = 30) String whatsappNumber
 ) {}

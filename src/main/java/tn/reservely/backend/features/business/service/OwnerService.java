@@ -18,12 +18,13 @@ import java.util.*;
 @RequiredArgsConstructor
 public class OwnerService {
 
-    private final BusinessRepository     businessRepo;
-    private final ServiceItemRepository  serviceRepo;
-    private final StaffRepository        staffRepo;
-    private final WorkingHoursRepository hoursRepo;
-    private final BookingRepository      bookingRepo;
-    private final BusinessService        businessService;
+    private final BusinessRepository          businessRepo;
+    private final ServiceItemRepository       serviceRepo;
+    private final StaffRepository             staffRepo;
+    private final WorkingHoursRepository      hoursRepo;
+    private final BookingRepository           bookingRepo;
+    private final BusinessService             businessService;
+    private final StaffAvailabilityRepository staffAvailabilityRepo;
 
     // ── business ─────────────────────────────────────────────────────────────
 
@@ -49,6 +50,10 @@ public class OwnerService {
         b.setGenderTarget(req.genderTarget() != null ? req.genderTarget() : "MEN");
         b.setStatus("ACTIVE");
         b.setPhone(req.phone());
+        b.setInstagramHandle(req.instagramHandle());
+        b.setFacebookHandle(req.facebookHandle());
+        b.setTiktokHandle(req.tiktokHandle());
+        b.setWhatsappNumber(req.whatsappNumber());
         if (req.tags() != null) b.getTags().addAll(req.tags());
         businessRepo.save(b);
         return businessService.getById(b.getId());
@@ -57,14 +62,18 @@ public class OwnerService {
     @Transactional
     public BusinessResponse updateBusiness(UUID ownerId, UpdateBusinessRequest req) {
         Business b = requireOwnedBusiness(ownerId);
-        if (req.name()         != null) b.setName(req.name());
-        if (req.address()      != null) b.setAddress(req.address());
-        if (req.city()         != null) b.setCity(req.city());
-        if (req.lat()          != null) b.setLat(req.lat());
-        if (req.lng()          != null) b.setLng(req.lng());
-        if (req.genderTarget() != null) b.setGenderTarget(req.genderTarget());
-        if (req.phone()        != null) b.setPhone(req.phone());
-        if (req.tags()         != null) { b.getTags().clear(); b.getTags().addAll(req.tags()); }
+        if (req.name()             != null) b.setName(req.name());
+        if (req.address()          != null) b.setAddress(req.address());
+        if (req.city()             != null) b.setCity(req.city());
+        if (req.lat()              != null) b.setLat(req.lat());
+        if (req.lng()              != null) b.setLng(req.lng());
+        if (req.genderTarget()     != null) b.setGenderTarget(req.genderTarget());
+        if (req.phone()            != null) b.setPhone(req.phone());
+        if (req.instagramHandle()  != null) b.setInstagramHandle(req.instagramHandle());
+        if (req.facebookHandle()   != null) b.setFacebookHandle(req.facebookHandle());
+        if (req.tiktokHandle()     != null) b.setTiktokHandle(req.tiktokHandle());
+        if (req.whatsappNumber()   != null) b.setWhatsappNumber(req.whatsappNumber());
+        if (req.tags()             != null) { b.getTags().clear(); b.getTags().addAll(req.tags()); }
         businessRepo.save(b);
         return businessService.getById(b.getId());
     }
@@ -143,6 +152,7 @@ public class OwnerService {
         Staff st = new Staff();
         st.setBusinessId(b.getId());
         st.setName(req.name());
+        st.setPhone(req.phone());
         st.setRating(5.0);
         if (req.specialties() != null) st.getSpecialties().addAll(req.specialties());
         staffRepo.save(st);
@@ -156,6 +166,7 @@ public class OwnerService {
                 .filter(s -> s.getBusinessId().equals(b.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
         if (req.name()        != null) st.setName(req.name());
+        if (req.phone()       != null) st.setPhone(req.phone());
         if (req.specialties() != null) { st.getSpecialties().clear(); st.getSpecialties().addAll(req.specialties()); }
         staffRepo.save(st);
         return toStaffDto(st);
@@ -169,6 +180,50 @@ public class OwnerService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
         st.setActive(false);
         staffRepo.save(st);
+    }
+
+    // ── staff availability ────────────────────────────────────────────────────
+
+    @Transactional
+    public StaffUnavailabilityDto addStaffUnavailability(UUID ownerId, UUID staffId,
+                                                         CreateStaffUnavailabilityRequest req) {
+        Business b = requireOwnedBusiness(ownerId);
+        if (req.to().isBefore(req.from())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End date must be after start date");
+        }
+        Staff st = staffRepo.findById(staffId)
+                .filter(s -> s.getBusinessId().equals(b.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
+
+        StaffAvailability avail = new StaffAvailability();
+        avail.setStaffId(staffId);
+        avail.setBusinessId(b.getId());
+        avail.setUnavailableFrom(req.from());
+        avail.setUnavailableTo(req.to());
+        staffAvailabilityRepo.save(avail);
+
+        return toUnavailabilityDto(avail, st.getName());
+    }
+
+    @Transactional
+    public void removeStaffUnavailability(UUID ownerId, UUID staffId, UUID availabilityId) {
+        Business b = requireOwnedBusiness(ownerId);
+        StaffAvailability avail = staffAvailabilityRepo.findById(availabilityId)
+                .filter(a -> a.getBusinessId().equals(b.getId()) && a.getStaffId().equals(staffId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unavailability record not found"));
+        staffAvailabilityRepo.delete(avail);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StaffUnavailabilityDto> getStaffAvailability(UUID ownerId) {
+        Business b = requireOwnedBusiness(ownerId);
+        List<StaffAvailability> records = staffAvailabilityRepo.findByBusinessId(b.getId());
+        List<Staff> allStaff = staffRepo.findByBusinessIdAndActiveTrue(b.getId());
+        Map<UUID, String> nameMap = new HashMap<>();
+        allStaff.forEach(s -> nameMap.put(s.getId(), s.getName()));
+        return records.stream()
+                .map(a -> toUnavailabilityDto(a, nameMap.getOrDefault(a.getStaffId(), "")))
+                .toList();
     }
 
     // ── bookings ─────────────────────────────────────────────────────────────
@@ -193,7 +248,17 @@ public class OwnerService {
     }
 
     private StaffDto toStaffDto(Staff s) {
-        return new StaffDto(s.getId().toString(), s.getName(), s.getAvatarUrl(), s.getRating(), new ArrayList<>(s.getSpecialties()));
+        return new StaffDto(s.getId().toString(), s.getName(), s.getAvatarUrl(), s.getRating(), new ArrayList<>(s.getSpecialties()), s.getPhone());
+    }
+
+    private StaffUnavailabilityDto toUnavailabilityDto(StaffAvailability a, String staffName) {
+        return new StaffUnavailabilityDto(
+                a.getId().toString(),
+                a.getStaffId().toString(),
+                staffName,
+                a.getUnavailableFrom().toString(),
+                a.getUnavailableTo().toString()
+        );
     }
 
     private BookingResponse toBookingResponse(Booking b) {

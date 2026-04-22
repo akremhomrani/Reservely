@@ -20,5 +20,9 @@ public record BusinessResponse(
         String openingHours,
         List<ServiceItemDto> services,
         List<StaffDto> staff,
-        Map<String, WorkingHoursDto> workingHours
+        Map<String, WorkingHoursDto> workingHours,
+        String instagramHandle,
+        String facebookHandle,
+        String tiktokHandle,
+        String whatsappNumber
 ) {}

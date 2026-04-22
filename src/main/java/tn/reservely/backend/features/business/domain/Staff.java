@@ -27,6 +27,8 @@ public class Staff {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    private String phone;
+
     private double rating;
 
     @Column(nullable = false)

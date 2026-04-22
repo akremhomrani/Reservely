@@ -28,11 +28,12 @@ public class BusinessService {
             "THURSDAY", "Thu", "FRIDAY", "Fri", "SATURDAY", "Sat", "SUNDAY", "Sun"
     );
 
-    private final BusinessRepository       businessRepo;
-    private final ServiceItemRepository    serviceRepo;
-    private final StaffRepository          staffRepo;
-    private final WorkingHoursRepository   hoursRepo;
-    private final BookingRepository        bookingRepo;
+    private final BusinessRepository          businessRepo;
+    private final ServiceItemRepository       serviceRepo;
+    private final StaffRepository             staffRepo;
+    private final WorkingHoursRepository      hoursRepo;
+    private final BookingRepository           bookingRepo;
+    private final StaffAvailabilityRepository staffAvailabilityRepo;
 
     @Transactional(readOnly = true)
     public List<BusinessResponse> listAll(String city) {
@@ -66,6 +67,7 @@ public class BusinessService {
                 hoursRepo.findByBusinessId(id));
     }
 
+    @Transactional(readOnly = true)
     public List<SlotDto> getSlots(UUID businessId, String date, UUID serviceId, UUID staffId) {
         LocalDate localDate = LocalDate.parse(date);
 
@@ -73,9 +75,13 @@ public class BusinessService {
                 .orElseThrow(() -> new NotFoundException("Service not found"));
         int durationMins = service.getDurationMinutes();
 
+        if (staffId != null && staffAvailabilityRepo.isStaffUnavailableOn(staffId, localDate)) {
+            return List.of();
+        }
+
         String dow = localDate.getDayOfWeek().name();
         WorkingHoursEntry wh = hoursRepo.findByBusinessIdAndDayOfWeek(businessId, dow).orElse(null);
-        if (wh == null || wh.isClosed() || wh.getOpenTime() == null) return List.of();
+        if (wh == null || wh.isClosed() || wh.getOpenTime() == null || wh.getCloseTime() == null) return List.of();
 
         LocalTime openTime  = LocalTime.parse(wh.getOpenTime());
         LocalTime closeTime = LocalTime.parse(wh.getCloseTime());
@@ -87,13 +93,20 @@ public class BusinessService {
                 ? bookingRepo.findByStaffIdInRange(staffId, dayStart, dayEnd, "CANCELLED")
                 : bookingRepo.findByBusinessIdInRange(businessId, dayStart, dayEnd, "CANCELLED");
 
+        ZonedDateTime nowTunis = ZonedDateTime.now(TUNIS);
         List<SlotDto> slots = new ArrayList<>();
         LocalTime current = openTime;
 
         while (!current.plusMinutes(durationMins).isAfter(closeTime)) {
             ZonedDateTime slotStart = localDate.atTime(current).atZone(TUNIS);
-            ZonedDateTime slotEnd   = slotStart.plusMinutes(durationMins);
 
+            // Skip slots that have already started
+            if (!slotStart.isAfter(nowTunis)) {
+                current = current.plusMinutes(30);
+                continue;
+            }
+
+            ZonedDateTime slotEnd = slotStart.plusMinutes(durationMins);
             Instant s = slotStart.toInstant();
             Instant e = slotEnd.toInstant();
 
@@ -126,8 +139,12 @@ public class BusinessService {
                 computeIsOpen(hours),
                 computeOpeningHours(hours),
                 services.stream().map(s -> new ServiceItemDto(s.getId().toString(), s.getName(), s.getDurationMinutes(), s.getPrice(), s.getDescription())).toList(),
-                staff.stream().map(s -> new StaffDto(s.getId().toString(), s.getName(), s.getAvatarUrl(), s.getRating(), new ArrayList<>(s.getSpecialties()))).toList(),
-                toWorkingHoursMap(hours)
+                staff.stream().map(s -> new StaffDto(s.getId().toString(), s.getName(), s.getAvatarUrl(), s.getRating(), new ArrayList<>(s.getSpecialties()), s.getPhone())).toList(),
+                toWorkingHoursMap(hours),
+                b.getInstagramHandle(),
+                b.getFacebookHandle(),
+                b.getTiktokHandle(),
+                b.getWhatsappNumber()
         );
     }
 

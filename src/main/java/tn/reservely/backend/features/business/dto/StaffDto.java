@@ -7,5 +7,6 @@ public record StaffDto(
         String name,
         String avatarUrl,
         double rating,
-        List<String> specialties
+        List<String> specialties,
+        String phone
 ) {}

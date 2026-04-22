@@ -105,6 +105,31 @@ public class OwnerController {
         return ResponseEntity.noContent().build();
     }
 
+    // ── staff availability ────────────────────────────────────────────────────
+
+    @PostMapping("/business/staff/{staffId}/unavailability")
+    public ResponseEntity<StaffUnavailabilityDto> addUnavailability(
+            Authentication auth,
+            @PathVariable UUID staffId,
+            @Valid @RequestBody CreateStaffUnavailabilityRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ownerService.addStaffUnavailability(ownerId(auth), staffId, req));
+    }
+
+    @DeleteMapping("/business/staff/{staffId}/unavailability/{availabilityId}")
+    public ResponseEntity<Void> removeUnavailability(
+            Authentication auth,
+            @PathVariable UUID staffId,
+            @PathVariable UUID availabilityId) {
+        ownerService.removeStaffUnavailability(ownerId(auth), staffId, availabilityId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/business/staff/availability")
+    public ResponseEntity<List<StaffUnavailabilityDto>> getStaffAvailability(Authentication auth) {
+        return ResponseEntity.ok(ownerService.getStaffAvailability(ownerId(auth)));
+    }
+
     // ── bookings ─────────────────────────────────────────────────────────────
 
     @GetMapping("/bookings")
