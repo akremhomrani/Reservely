@@ -12,4 +12,5 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findByBusinessIdAndStartAtBetweenAndStatusNot(UUID businessId, Instant start, Instant end, String status);
     List<Booking> findByStaffIdAndStartAtBetweenAndStatusNot(UUID staffId, Instant start, Instant end, String status);
     boolean existsByReferenceCode(String referenceCode);
+    List<Booking> findByBusinessIdOrderByStartAtDesc(UUID businessId);
 }

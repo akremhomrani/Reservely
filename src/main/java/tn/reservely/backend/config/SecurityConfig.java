@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/businesses/**").permitAll()
+                .requestMatchers("/api/owner/**").hasRole("BUSINESS_OWNER")
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth -> oauth
