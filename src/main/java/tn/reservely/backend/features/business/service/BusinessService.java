@@ -84,8 +84,8 @@ public class BusinessService {
         Instant dayEnd   = localDate.plusDays(1).atStartOfDay(TUNIS).toInstant();
 
         List<Booking> existing = staffId != null
-                ? bookingRepo.findByStaffIdAndStartAtBetweenAndStatusNot(staffId, dayStart, dayEnd, "CANCELLED")
-                : bookingRepo.findByBusinessIdAndStartAtBetweenAndStatusNot(businessId, dayStart, dayEnd, "CANCELLED");
+                ? bookingRepo.findByStaffIdInRange(staffId, dayStart, dayEnd, "CANCELLED")
+                : bookingRepo.findByBusinessIdInRange(businessId, dayStart, dayEnd, "CANCELLED");
 
         List<SlotDto> slots = new ArrayList<>();
         LocalTime current = openTime;
